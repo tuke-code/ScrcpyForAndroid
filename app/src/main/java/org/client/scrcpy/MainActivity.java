@@ -41,6 +41,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -67,6 +68,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
@@ -421,23 +425,43 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
         // 第一项固定为 USB 连接入口，其余为历史 IP 记录
         // 若检测到 USB 设备，显示其在 adb devices 中的名称
         String usbLabel = getUsbAdbDeviceLabel();
-        String[] list = new String[history.length + 1];
-        list[0] = usbLabel != null ? usbLabel : getString(R.string.action_start_usb);
-        System.arraycopy(history, 0, list, 1, history.length);
+        final List<String> items = new ArrayList<>();
+        items.add(usbLabel != null ? usbLabel : getString(R.string.action_start_usb));
+        items.addAll(Arrays.asList(history));
 
         final ListPopupWindow listPopupWindow;
         listPopupWindow = new ListPopupWindow(this);
-        listPopupWindow.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, list));//用android内置布局，或设计自己的样式
+        // 自定义列表项：设备名 + 右侧删除按钮
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.item_history_device, R.id.text_device, items) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                View deleteButton = view.findViewById(R.id.button_delete);
+                if (position == 0) {
+                    // USB 连接入口不允许删除
+                    deleteButton.setVisibility(View.GONE);
+                } else {
+                    deleteButton.setVisibility(View.VISIBLE);
+                    final String device = getItem(position);
+                    deleteButton.setOnClickListener(v -> {
+                        removeHistory(device);
+                        remove(device);
+                        notifyDataSetChanged();
+                    });
+                }
+                return view;
+            }
+        };
+        listPopupWindow.setAdapter(adapter);
         listPopupWindow.setAnchorView(mEditText);//以哪个控件为基准，在该处以mEditText为基准
         listPopupWindow.setModal(true);
         listPopupWindow.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
-        String[] finalList = list;
         listPopupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {//设置项点击监听
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 listPopupWindow.dismiss();
-                mEditText.setText(finalList[i]);
+                mEditText.setText(items.get(i));
                 if (i == 0) {  // 选择了 USB 连接入口，仅填入设备，由用户点击启动/ADB命令按钮
                     // 触发一次状态刷新，检测 USB 设备在线状态
                     if (statusMonitorActive) {
@@ -449,6 +473,20 @@ public class MainActivity extends Activity implements Scrcpy.ServiceCallbacks, S
             }
         });
         listPopupWindow.show();
+    }
+
+    /**
+     * 从历史连接记录中删除指定设备
+     */
+    private void removeHistory(String device) {
+        String[] historyList = getHistoryList();
+        JSONArray historyJson = new JSONArray();
+        for (String item : historyList) {
+            if (!item.equals(device)) {
+                historyJson.put(item);
+            }
+        }
+        PreUtils.put(context, Constant.HISTORY_LIST_KEY, historyJson.toString());
     }
 
     private void shareSessionLog() {

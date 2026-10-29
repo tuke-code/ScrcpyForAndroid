@@ -53,6 +53,7 @@
     <string name="need_register">需要注册</string>
 
     <string name="more_settings">更多设置 ▼</string>
+    <string name="history_delete">删除</string>
     <string name="collapse_settings">收起设置 ▲</string>
 
     <string name="resolution_auto">自动</string>

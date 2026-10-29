@@ -8,6 +8,7 @@ android {
     flavorDimensions = ["default"]
 
     compileSdkVersion 31
+    buildToolsVersion "35.0.0"
 
     buildFeatures {
         buildConfig true

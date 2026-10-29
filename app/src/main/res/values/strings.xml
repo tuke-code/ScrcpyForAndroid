@@ -15,6 +15,7 @@
     <string name="label_x">x</string>
     <string name="action_start">Start</string>
     <string name="action_start_usb">Connect via USB</string>
+    <string name="history_delete">Delete</string>
     <string name="usb_no_device">No USB device detected. Connect a device with a USB cable.</string>
     <string name="usb_no_adb_interface">USB device found, but ADB is not available. Enable USB debugging on the target device and set the USB mode to allow it.</string>
     <string name="usb_permission_denied">USB permission denied</string>

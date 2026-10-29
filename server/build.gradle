@@ -5,6 +5,7 @@ android {
     namespace 'org.server.scrcpy'
 
     compileSdkVersion 31
+    buildToolsVersion "35.0.0"
     defaultConfig {
         applicationId "org.server.scrcpy"
         minSdkVersion 21
